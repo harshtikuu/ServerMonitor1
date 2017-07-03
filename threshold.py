@@ -1,9 +1,7 @@
 import csv
-f=open('usagedata.csv','r+')
-reader=csv.DictReader(f,delimiter=',')
 def memorythreshold(hostname):
 	f=open('usagedata.csv','r+')
-    reader=csv.DictReader(f,delimiter=',')
+	reader=csv.DictReader(f,delimiter=',')
 	for line in reader:
 		if line['hostname']==hostname:
 			return int(line['memorythreshold'])

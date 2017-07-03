@@ -10,4 +10,4 @@ def sendmessage(message):
 	yag.send(maillist,'alert',message)
 
 if __name__=="__main__":
-	sendmessage('shit is working bro')
+	sendmessage('new message')

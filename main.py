@@ -4,7 +4,6 @@ import pxssh
 import matplotlib.pyplot as plt
 import time
 import threshold
-import warning
 import mail
 import math
 import numpy

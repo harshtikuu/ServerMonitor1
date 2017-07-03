@@ -1,6 +1,7 @@
 import yagmail
 import csv
 import getpass
+import sys
 f=open('mail.csv','r+')
 reader=csv.DictReader(f,delimiter=',')
 password=getpass.getpass()
@@ -12,7 +13,11 @@ def getcount():
 def getduration():
 	return int(line['duration'])
 def sendmessage(message):
-	yag=yagmail.SMTP('tiku.harsh',password)
+	try:
+		yag=yagmail.SMTP('tiku.harsh',password)
+	except :
+		print('Incorrect password,try again')
+		sys.exit(1)
 	yag.send(maillist,'alert',message)
 
 if __name__=="__main__":

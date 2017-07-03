@@ -77,10 +77,7 @@ class Server:
 			if  c1<count:
 				if abs(time.time()-(currenttime2+duration*c1*60))<30:
 					print('Sending disk alert to ',mail.maillist)
-					try:
-					 	mail.sendmessage(self.diskdata())
-					except smtplib.SMTPAuthenticationError:
-					 	print("Incorrect password,try again")
+					mail.sendmessage(self.diskdata())
 					c1+=1
 		else:
 			mailsentdisc=True

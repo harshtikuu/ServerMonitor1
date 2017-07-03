@@ -16,7 +16,7 @@ def sendmessage(message):
 	try:
 		yag=yagmail.SMTP('tiku.harsh',password)
 	except :
-		print('Incorrect password,try again')
+		print('Cannot login: \n Possible Reasons: \n 1. No network connection. \n 2. Incorrect username or password')
 		sys.exit(1)
 	yag.send(maillist,'alert',message)
 

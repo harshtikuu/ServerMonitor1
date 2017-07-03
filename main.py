@@ -7,14 +7,16 @@ import threshold
 import mail
 import math
 import numpy
+import netcheck
+import sys
 count=mail.getcount()
 c1,c2=0,0
 duration=mail.getduration()
 currenttime1,currenttime2=time.time(),time.time()
 mailsentdisc,mailsentmemory=False,False
-class Server:
+class Server(threading.Thread):
 	def __init__(self,credentials):
-		#threading.Thread.__init__(self)
+		threading.Thread.__init__(self)
 		self.hostname=credentials['hostname']
 		self.username=credentials['username']
 		self.password=credentials['password']
@@ -25,7 +27,10 @@ class Server:
 		self.disk=[]
 		self.y1=0
 		self.y2=0
+		self.monitorcount=0
+		self.downcount=0
 		self.s.login(self.hostname,self.username,self.password)
+		self.serverdown={}
 	def memorymonitor(self):
 		if self.version=='rhel7':
 			self.s.sendline(''' awk '/^Mem/ {printf("%u%%", ($4/$2)*100);}' <(free -m) ''')
@@ -33,6 +38,7 @@ class Server:
 			self.s.sendline(''' awk '/^Mem/ {printf("%u%%", ($4/$2)*100);}' <(free -m) ''')
 		self.s.prompt()
 		self.memory.append((int(self.s.before[-3:-1])))
+		self.f=open('{}mem.csv','a')
 	#def cpumonitor(self):
 	##	self.s.prompt()
 	#	sendlinelf.cpu.append((int(self.s.before[-3:-1]))) 
@@ -60,33 +66,41 @@ class Server:
 
 	def monitor(self):
 		#self.cpumonitor()
-		self.memorymonitor()
-		global mailsentmemory,mailsentdisc,c1,c2,count,currenttime1,currenttime2,duration
-		if threshold.memorythreshold(self.hostname)<self.memory[-1]:
-			if  c2<count:
-				if abs(time.time()-(currenttime1+duration*c2*60))<30:
-					print('Sending memory alert to ',mail.maillist)
-					mail.sendmessage(self.memorydata())
-					c2+=1
+		if not netcheck.isdown(self):
+			self.memorymonitor()
+			global mailsentmemory,mailsentdisc,c1,c2,count,currenttime1,currenttime2,duration
+			if threshold.memorythreshold(self.hostname)<self.memory[-1]:
+				if  c2<count:
+					if abs(time.time()-(currenttime1+duration*c2*60))<30:
+						print('Sending memory alert to ',mail.maillist)
+						mail.sendmessage(self.memorydata())
+						c2+=1
 
+			else:
+				mailsentmemory=True
+				#print('Memory usage above thresholds')
+			self.diskmonitor()
+			if threshold.diskthreshold(self.hostname)<self.disk[-1]:
+				if  c1<count:
+					if abs(time.time()-(currenttime2+duration*c1*60))<30:
+						print('Sending disk alert to ',mail.maillist)
+						mail.sendmessage(self.diskdata())
+						c1+=1
+			else:
+				mailsentdisc=True
+			self.monitorcount+=1
+			time.sleep(0.1)	
 		else:
-			mailsentmemory=True
-			#print('Memory usage above thresholds')
-		self.diskmonitor()
-		if threshold.diskthreshold(self.hostname)<self.disk[-1]:
-			if  c1<count:
-				if abs(time.time()-(currenttime2+duration*c1*60))<30:
-					print('Sending disk alert to ',mail.maillist)
-					mail.sendmessage(self.diskdata())
-					c1+=1
-		else:
-			mailsentdisc=True
-		time.sleep(0.1)		
-	def start(self):
-		while True:
-			print('Monitoring ',self.hostname)
-			self.monitor()
-			#self.showval()
+			print('Server Down')
+			self.serverdown[time.ctime(time.time())]=0
+			self.monitorcount+=1
+			self.downcount+=1
+
+	def run(self):
+			while True:
+				print('Monitoring ',self.hostname)
+				self.monitor()
+				#self.showval()
 			
 	def showval(self):
 		self.y1+=1
@@ -104,4 +118,6 @@ if __name__ == '__main__':
 	objects=[Server(line) for line in reader]
 	for thread in objects:
 		thread.start()
+
+
 

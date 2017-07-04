@@ -9,11 +9,12 @@ import math
 import numpy
 import netcheck
 import sys
+import writecsv
 count=mail.getcount()
 c1,c2=0,0
 duration=mail.getduration()
 currenttime1,currenttime2=time.time(),time.time()
-mailsentdisc,mailsentmemory=False,False
+mailsentdisc,mailsentmemory,writtenheader=False,False,False
 class Server(threading.Thread):
 	def __init__(self,credentials):
 		threading.Thread.__init__(self)
@@ -25,6 +26,8 @@ class Server(threading.Thread):
 		self.memory=[]
 		self.cpu=[]
 		self.disk=[]
+		self.memoryfile=[]
+		self.diskfile=[]
 		self.y1=0
 		self.y2=0
 		self.monitorcount=0
@@ -38,7 +41,14 @@ class Server(threading.Thread):
 			self.s.sendline(''' awk '/^Mem/ {printf("%u%%", ($4/$2)*100);}' <(free -m) ''')
 		self.s.prompt()
 		self.memory.append((int(self.s.before[-3:-1])))
-		self.f=open('{}mem.csv','a')
+		self.memoryfile.extend([{'time':time.ctime(time.time())},{'memory':self.memory[-1]}])
+		global writtenheader
+		'''if not writtenheader:
+			writecsv.writeheader(self)
+			writtenheader=True'''
+		writecsv.memorywrite(self)
+		del self.memory[:-1]
+		self.memoryfile=[]
 	#def cpumonitor(self):
 	##	self.s.prompt()
 	#	sendlinelf.cpu.append((int(self.s.before[-3:-1]))) 
@@ -46,6 +56,10 @@ class Server(threading.Thread):
 		self.s.sendline(''' awk '/^total/ {printf("%u%%", $5);}' <(df -h --total) ''')
 		self.s.prompt()
 		self.disk.append((int(self.s.before[-3:-1])))
+		self.diskfile.extend([{'time':time.ctime(time.time())},{'disk':self.disk[-1]}])
+		writecsv.diskwrite(self)
+		del self.disk[:-1]
+		self.diskfile=[]
 	def diskdata(self):
 		hostname=self.hostname
 		thresholdusage=threshold.diskthreshold(hostname)
@@ -89,9 +103,9 @@ class Server(threading.Thread):
 			else:
 				mailsentdisc=True
 			self.monitorcount+=1
-			time.sleep(0.1)	
+			time.sleep(5)	
 		else:
-			print('Server Down')
+			print(self.hostname,'Server Down')
 			self.serverdown[time.ctime(time.time())]=0
 			self.monitorcount+=1
 			self.downcount+=1

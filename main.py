@@ -42,9 +42,9 @@ class Server(threading.Thread):
 		self.serverdown={}
 	def memorymonitor(self):
 		if self.version=='rhel7':
-			self.s.sendline(''' awk '/^Mem/ {printf("%u%%", ($4/$2)*100);}' <(free -m) ''')
+			self.s.sendline(''' awk '/^Mem/ {printf("%u%%", ($3/$2)*100);}' <(free -m) ''')
 		else:
-			self.s.sendline(''' awk '/^Mem/ {printf("%u%%", ($4/$2)*100);}' <(free -m) ''')
+			self.s.sendline(''' awk '/^Mem/ {printf("%u%%", ($3/$2)*100);}' <(free -m) ''')
 		self.s.prompt()
 		self.memory.append((int(self.s.before[-3:-1])))
 		self.memoryfile.extend([{'time':time.ctime(time.time())},{'memory':self.memory[-1]}])

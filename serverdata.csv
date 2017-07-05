@@ -1,2 +1,3 @@
 hostname,username,password,version,duration
 127.0.0.1,harsh,shinchan,rhel6,5
+192.168.1.220,root,password,rhel7

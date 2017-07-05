@@ -7,7 +7,6 @@ import threshold
 import mail
 import math
 import numpy
-import netcheck
 import sys
 import writecsv
 import datainitialize

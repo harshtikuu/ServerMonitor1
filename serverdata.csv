@@ -1,2 +1,2 @@
-hostname,username,password,version
-127.0.0.1,harsh,shinchan,rhel6
+hostname,username,password,version,duration
+127.0.0.1,harsh,shinchan,rhel6,5

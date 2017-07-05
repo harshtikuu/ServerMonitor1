@@ -17,3 +17,8 @@ def diskwrite(server):
 	f=open('{}disk'.format(server.hostname)+'.csv','a')
 	writer=csv.DictWriter(f,keys2)
 	writer.writerows(server.diskfile)
+'''def downdata(server):
+	f=open('downdata.csv','a')
+	keys=['hostname','downpercentage']
+	w=csv.DictWriter(f,keys1)
+	w.writerows()'''

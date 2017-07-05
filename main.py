@@ -10,6 +10,7 @@ import numpy
 import netcheck
 import sys
 import writecsv
+import datainitialize
 count=mail.getcount()
 c1,c2=0,0
 duration=mail.getduration()
@@ -21,7 +22,8 @@ class Server(threading.Thread):
 		self.hostname=credentials['hostname']
 		self.username=credentials['username']
 		self.password=credentials['password']
-		self.version= credentials['version']   
+		self.version= credentials['version']  
+		self.duration=credentials['duration'] 
 		self.s=pxssh.pxssh()
 		self.memory=[]
 		self.cpu=[]
@@ -32,7 +34,11 @@ class Server(threading.Thread):
 		self.y2=0
 		self.monitorcount=0
 		self.downcount=0
-		self.s.login(self.hostname,self.username,self.password)
+		self.down=False
+		try:
+			self.s.login(self.hostname,self.username,self.password)
+		except:
+			self.down=True
 		self.serverdown={}
 	def memorymonitor(self):
 		if self.version=='rhel7':
@@ -80,7 +86,7 @@ class Server(threading.Thread):
 
 	def monitor(self):
 		#self.cpumonitor()
-		if not netcheck.isdown(self):
+		if not self.down:
 			self.memorymonitor()
 			global mailsentmemory,mailsentdisc,c1,c2,count,currenttime1,currenttime2,duration
 			if threshold.memorythreshold(self.hostname)<self.memory[-1]:
@@ -103,13 +109,20 @@ class Server(threading.Thread):
 			else:
 				mailsentdisc=True
 			self.monitorcount+=1
-			time.sleep(5)	
+			#time.sleep(float(self.duration)*60)
+			time.sleep(1)	
 		else:
 			print(self.hostname,'Server Down')
 			self.serverdown[time.ctime(time.time())]=0
 			self.monitorcount+=1
 			self.downcount+=1
-
+			try:
+				self.s.login(self.hostname,self.username,self.password)
+				self.down=False
+			except:
+				self.down=True
+				time.sleep(1)
+		#writecsv.downdata(self)
 	def run(self):
 			while True:
 				print('Monitoring ',self.hostname)

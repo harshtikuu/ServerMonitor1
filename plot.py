@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import readdata
 import numpy as np
 import sys
+import csv
 def format(string):
 	return string[:-5]
 def memoryplot(hostname):
@@ -18,8 +19,7 @@ def memoryplot(hostname):
 	plt.xticks(x, x1)
 	fig = plt.gcf()
 	fig.subplots_adjust(bottom=0.3)
-	plt.scatter(x, y)
-	plt.show()
+	plt.plot(x, y,label=hostname)
 def diskplot(hostname):
 	x,y=readdata.readdisk(hostname)
 	x1,y1=[],[]
@@ -34,18 +34,21 @@ def diskplot(hostname):
 	plt.xticks(x, x1)
 	fig = plt.gcf()
 	fig.subplots_adjust(bottom=0.2)
-	plt.plot(x, y)
-	plt.show()
+	plt.plot(x, y,label=hostname)
 #plt.plot(x,y1)
 #plt.show()
-hostname=input('Enter hostname')
+hostname=open('serverdata.csv','r+')
+reader=csv.DictReader(hostname,delimiter=',')
 if sys.argv[1]=='memory':
-	memoryplot(hostname)
+	for line in reader:
+		memoryplot(line['hostname'])
 elif sys.argv[1]=='disk':
-	diskplot(hostname)
+	for line in reader:
+		diskplot(line['hostname'])
 else:
 	print('Invalid argument')
-
+plt.legend(loc='best')
+plt.show()
 
 '''
 x,y=readdata.readdisk()

@@ -19,4 +19,4 @@ def diskthreshold(hostname):
 			return int(line['diskthreshold'])
 
 if __name__ == '__main__':
-	print((memorythreshold('192.168.1.200')))
+	print(cputhreshold('192.168.1.220'))

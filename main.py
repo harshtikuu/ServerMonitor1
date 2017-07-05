@@ -12,7 +12,7 @@ import sys
 import writecsv
 import datainitialize
 count=mail.getcount()
-c1,c2=0,0
+c1,c2,c3=0,0,0
 duration=mail.getduration()
 currenttime1,currenttime2=time.time(),time.time()
 mailsentdisc,mailsentmemory,writtenheader=False,False,False
@@ -30,6 +30,7 @@ class Server(threading.Thread):
 		self.disk=[]
 		self.memoryfile=[]
 		self.diskfile=[]
+		self.cpufile=[]
 		self.y1=0
 		self.y2=0
 		self.monitorcount=0
@@ -55,9 +56,14 @@ class Server(threading.Thread):
 		writecsv.memorywrite(self)
 		del self.memory[:-1]
 		self.memoryfile=[]
-	#def cpumonitor(self):
-	##	self.s.prompt()
-	#	sendlinelf.cpu.append((int(self.s.before[-3:-1]))) 
+	def cpumonitor(self):
+		self.s.sendline(' mpstat | grep all')
+		self.s.prompt()
+		self.cpu.append(100-float(self.s.before[-7:-2].decode('utf-8')))
+		self.cpufile.extend([{'time':time.ctime(time.time())},{'cpu':self.cpu[-1]}])
+		writecsv.cpuwrite(self)
+		del self.cpu[:-1]
+		self.cpufile=[] 
 	def diskmonitor(self):
 		self.s.sendline(''' awk '/^total/ {printf("%u%%", $5);}' <(df -h --total) ''')
 		self.s.prompt()
@@ -83,12 +89,20 @@ class Server(threading.Thread):
 		  '''.format(hostname,currentusage,thresholdusage,(currentusage- thresholdusage))
 		return string
 
+	def cpudata(self):
+		hostname=self.hostname
+		thresholdusage=threshold.cputhreshold(hostname)
+		currentusage=self.cpu[-1]
+		string=''' CPU usage alert for {} \n
+		 Current CPU usage = {}% \n Threshold = {}% \n Increase in limit = {}% 
+		  '''.format(hostname,currentusage,thresholdusage,(currentusage- thresholdusage))
+		return string
 
 	def monitor(self):
 		#self.cpumonitor()
 		if not self.down:
 			self.memorymonitor()
-			global mailsentmemory,mailsentdisc,c1,c2,count,currenttime1,currenttime2,duration
+			global mailsentmemory,mailsentdisc,c1,c2,count,currenttime1,currenttime2,duration,c3
 			if threshold.memorythreshold(self.hostname)<self.memory[-1]:
 				if  c2<count:
 					if abs(time.time()-(currenttime1+duration*c2*60))<30:
@@ -108,9 +122,14 @@ class Server(threading.Thread):
 						c1+=1
 			else:
 				mailsentdisc=True
-			self.monitorcount+=1
-			#time.sleep(float(self.duration)*60)
-			time.sleep(1)	
+			self.cpumonitor()
+			if threshold.cputhreshold(self.hostname)<self.cpu[-1]:
+				if  c3<count:
+					if abs(time.time()-(currenttime2+duration*c3*60))<30:
+						print('Sending cpu alert to ',mail.maillist)
+						mail.sendmessage(self.cpudata())
+						c3+=1
+			
 		else:
 			print(self.hostname,'Server Down')
 			self.serverdown[time.ctime(time.time())]=0

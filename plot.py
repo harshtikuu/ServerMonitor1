@@ -43,6 +43,26 @@ def diskplot(hostname):
 	plt.xlabel('time')
 	plt.ylabel('percent used disk')
 	plt.plot(x, y,label=hostname)
+def cpuplot(hostname):
+	x,y=readdata.readcpu(hostname)
+	x1,y1=[],[]
+	for i,j in zip(x,y):
+		if x.index(i)%2==0:
+			x1.append(i)
+		if y.index(j)%2!=0:
+			y1.append(j)
+	y=list(map(float,y1))
+	x = list(np.arange(len(x1)))
+	x1=list(map(format,x1))
+	plt.xticks(x, x1)
+	fig = plt.gcf()
+	fig.subplots_adjust(bottom=0.2)
+	plt.ylim(ymin=0,ymax=100)
+	plt.title('CPU usage stats')
+	plt.xlabel('time')
+	plt.ylabel('percent used CPU')
+	plt.plot(x, y,label=hostname)
+
 #plt.plot(x,y1)
 #plt.show()
 hostname=open('serverdata.csv','r+')
@@ -53,6 +73,9 @@ if sys.argv[1]=='memory':
 elif sys.argv[1]=='disk':
 	for line in reader:
 		diskplot(line['hostname'])
+elif sys.argv[1]=='cpu':
+	for line in reader:
+		cpuplot(line['hostname'])
 else:
 	print('Invalid argument')
 plt.legend(loc='best')

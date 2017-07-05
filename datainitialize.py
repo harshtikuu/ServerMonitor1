@@ -11,3 +11,7 @@ for line in reader:
 		f=open('{}disk'.format(line['hostname'])+'.csv','a')
 		f.write('time,disk\n')
 		f.close()
+	if not os.path.isfile('{}cpu'.format(line['hostname'])+'.csv'):
+		f=open('{}cpu'.format(line['hostname'])+'.csv','a')
+		f.write('time,cpu\n')
+		f.close()
